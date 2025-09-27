@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego del Impostor - Fútbol</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+
+        #display {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            word-break: break-word;
+            hyphens: auto;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        #playButton {
+            background: linear-gradient(45deg, #00c851, #007e33);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: clamp(1rem, 3.5vw, 1.3rem);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 200, 81, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            width: 100%;
+            max-width: 300px;
+            min-height: 50px;
+            box-sizing: border-box;
+        }
+
+        #playButton:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 200, 81, 0.4);
+        }
+
+        #playButton:disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            opacity: 0.9;
+            line-height: 1.6;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .instructions p {
+            margin: 8px 0;
+        }
+
+        .impostor {
+            color: #ff4444 !important;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .progress {
+            margin: 15px 0;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #00c851, #007e33);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive breakpoints */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 15px;
+                margin: 5px;
+            }
+            
+            h1 {
+                margin-bottom: 15px;
+            }
+            
+            #display {
+                margin: 15px 0;
+                min-height: 50px;
+            }
+            
+            .instructions {
+                margin-top: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+                border-radius: 15px;
+            }
+            
+            #playButton {
+                padding: 10px 20px;
+                min-height: 45px;
+            }
+            
+            .progress {
+                height: 5px;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                margin-bottom: 10px;
+            }
+            
+            #display {
+                margin: 10px 0;
+                min-height: 40px;
+            }
+            
+            .instructions {
+                margin-top: 10px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚽ Encuentra al Impostor ⚽</h1>
+        
+        <div id="display">¡Presiona el botón para comenzar!</div>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <button id="playButton">🎮 JUGADOR 1</button>
+        
+        <div class="instructions">
+            <p>📋 <strong>Instrucciones:</strong></p>
+            <p>• Cada persona toca el botón una vez</p>
+            <p>• Aparece un jugador durante 1 segundo</p>
+            <p>• Después de 5 personas, uno habrá visto <span style="color: #ff4444;">IMPOSTOR</span></p>
+            <p>• ¡Descubran quién fue el impostor!</p>
+        </div>
+    </div>
+
+    <script>
+        // Lista de jugadores de fútbol - Los 100 más famosos + personalizados
+        const jugadores = [
+            // Los Dioses del Fútbol
+            'Lionel Messi', 'Diego Armando Maradona', 'Pelé', 'Cristiano Ronaldo', 'Johan Cruyff',
+            'Zinedine Zidane', 'Ronaldinho', 'Ronaldo Nazário', 'Alfredo Di Stéfano', 'Franz Beckenbauer',
+            
+            // Leyendas Absolutas (con cambios personalizados)
+            'Turroneta', 'Flaco López', 'Garrincha', 'Roberto Baggio', 'Marco van Basten',
+            'Franco Baresi', 'Paolo Maldini', 'Tetilla', 'Eusebio', 'Luka Modrić',
+            'Andrés Iniesta', 'Xavi Hernández', 'Thierry Henry', 'Kaká', 'Lothar Matthäus',
+            'Ruud Gullit', 'Dennis Bergkamp', 'Baleado', 'Romário', 'Thomsen',
+            
+            // Estrellas Históricas
+            'Kylian Mbappé', 'Neymar Jr', 'Erling Haaland', 'Kevin De Bruyne', 'Robert Lewandowski',
+            'Karim Benzema', 'Mohamed Salah', 'Virgil van Dijk', 'Sadio Mané', 'Paul Pogba',
+            'Antoine Griezmann', 'Harry Kane', 'Sergio Ramos', 'Toni Kroos', 'N\'Golo Kanté',
+            'Joshua Kimmich', 'Jadon Sancho', 'Phil Foden', 'Pedri', 'Jude Bellingham',
+            'Vinícius Jr', 'Rafael Leão', 'Bruno Fernandes', 'Son Heung-min', 'Jan Oblak',
+            'Alisson Becker', 'Manuel Neuer', 'Thibaut Courtois', 'Marc-André ter Stegen',
+            
+            // Grandes del Pasado y Presente
+            'Cafu', 'Roberto Carlos', 'Rivaldo', 'Raúl González', 'Iker Casillas',
+            'Gianluigi Buffon', 'Andrea Pirlo', 'Francesco Totti', 'Steven Gerrard', 'Frank Lampard',
+            'John Terry', 'Rio Ferdinand', 'Patrick Vieira', 'Claude Makélélé', 'Didier Drogba',
+            'Samuel Eto\'o', 'Zlatan Ibrahimović', 'Luis Suárez', 'Edinson Cavani', 'Arturo Vidal',
+            'Alexis Sánchez', 'James Rodríguez', 'Radamel Falcao', 'Carlos Tévez', 'Ángel Di María',
+            'Paulo Dybala', 'Lautaro Martínez', 'Sergio Agüero', 'David Silva', 'Cesc Fàbregas',
+            'Gerard Piqué', 'Jordi Alba', 'Dani Alves', 'Marcelo', 'Casemiro',
+            'Fabinho', 'Thiago Silva', 'Marquinhos',
+            
+            // Jugadores actuales de BOCA JUNIORS
+            'Sergio Romero', 'Marcos Rojo', 'Nicolás Figal', 'Frank Fabra', 'Jorman Campuzano',
+            'Guillermo Fernández', 'Pol Fernández', 'Oscar Romero', 'Sebastián Villa', 'Darío Benedetto',
+            'Luis Vázquez', 'Norberto Briasco', 'Alan Varela', 'Ezequiel Fernández', 'Bruno Valdez',
+            'Luis Advíncula', 'Facundo Roncaglia', 'Agustín Rossi', 'Javier García', 'Cristian Medina',
+            
+            // Jugadores actuales de RIVER PLATE
+            'Franco Armani', 'Milton Casco', 'Paulo Díaz', 'Germán Pezzella', 'Enzo Díaz',
+            'Rodrigo Aliendro', 'Enzo Pérez', 'Nacho Fernández', 'Nicolás De La Cruz', 'Miguel Borja',
+            'Lucas Beltrán', 'Esequiel Barco', 'Matías Suárez', 'Salomón Rondón', 'Agustín Palavecino',
+            'Robert Rojas', 'Leandro González Pírez', 'Andrés Herrera', 'José Paradela', 'Braian Romero',
+            
+            // Jugadores adicionales
+            'Deyverson', 'Gabigol', 'Vitor Roque', 'Gustavo Gómez', 'Pity Martínez', 
+            'Juanfer Quintero', 'Soteldo', 'Vicky Denis', 'La Ecuatoriana'
+        ];
+
+        const playButton = document.getElementById('playButton');
+        const display = document.getElementById('display');
+        const progressBar = document.getElementById('progressBar');
+
+        let jugadorActual = 1;
+        let esperandoSiguiente = false;
+        let jugadorSeleccionado = '';
+        let posicionImpostor = 0;
+        let secuencia = [];
+
+        playButton.addEventListener('click', manejarClick);
+
+        function iniciarNuevaRonda() {
+            jugadorActual = 1;
+            esperandoSiguiente = false;
+            // Seleccionar jugador aleatorio
+            jugadorSeleccionado = jugadores[Math.floor(Math.random() * jugadores.length)];
+            // Determinar posición del impostor (1-5)
+            posicionImpostor = Math.floor(Math.random() * 5) + 1;
+            
+            // Crear secuencia
+            secuencia = [];
+            for (let i = 1; i <= 5; i++) {
+                if (i === posicionImpostor) {
+                    secuencia.push('IMPOSTOR');
+                } else {
+                    secuencia.push(jugadorSeleccionado);
+                }
+            }
+            
+            progressBar.style.width = '0%';
+            display.textContent = '¡Jugador 1, presiona el botón!';
+            playButton.textContent = '🎮 JUGADOR 1';
+        }
+
+        function manejarClick() {
+            if (esperandoSiguiente) {
+                // Estado: esperando al siguiente jugador
+                jugadorActual++;
+                esperandoSiguiente = false;
+                
+                if (jugadorActual <= 5) {
+                    display.textContent = `¡Jugador ${jugadorActual}, presiona el botón!`;
+                    playButton.textContent = `🎮 JUGADOR ${jugadorActual}`;
+                } else {
+                    // Terminar ronda
+                    display.textContent = `🎯 ¡Ronda terminada! El impostor era el jugador #${posicionImpostor}`;
+                    playButton.textContent = '🎮 NUEVA RONDA';
+                    setTimeout(() => {
+                        iniciarNuevaRonda();
+                    }, 3000);
+                }
+            } else {
+                // Estado: mostrar jugador
+                mostrarJugador();
+            }
+        }
+
+        function mostrarJugador() {
+            // Deshabilitar botón temporalmente
+            playButton.disabled = true;
+            playButton.textContent = '⏳ MOSTRANDO...';
+            
+            // Actualizar progreso
+            progressBar.style.width = `${(jugadorActual / 5) * 100}%`;
+            
+            // Obtener y mostrar el jugador/impostor
+            const elemento = secuencia[jugadorActual - 1];
+            display.textContent = elemento;
+            
+            // Estilo especial para impostor
+            if (elemento === 'IMPOSTOR') {
+                display.classList.add('impostor');
+            } else {
+                display.classList.remove('impostor');
+            }
+            
+            // Después de 1 segundo, cambiar a estado "siguiente"
+            setTimeout(() => {
+                display.classList.remove('impostor');
+                esperandoSiguiente = true;
+                playButton.disabled = false;
+                
+                if (jugadorActual < 5) {
+                    display.textContent = '¿Listo? ¡Siguiente jugador!';
+                    playButton.textContent = '✅ SIGUIENTE';
+                } else {
+                    display.textContent = '¿Listos para ver el resultado?';
+                    playButton.textContent = '🎯 VER RESULTADO';
+                }
+            }, 1000);
+        }
+
+        // Inicializar
+        iniciarNuevaRonda();
+    </script>
+</body>
+</html>
