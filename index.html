@@ -77,6 +77,29 @@
             box-sizing: border-box;
         }
 
+        #resetButton {
+            margin-top: 15px;
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            padding: 10px 20px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            border-radius: 50px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3);
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+
+        #resetButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 68, 68, 0.4);
+        }
+
         #playButton:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 15px 35px rgba(0, 200, 81, 0.4);
@@ -204,6 +227,10 @@
         
         <button id="playButton">🎮 JUGADOR 1</button>
         
+        <button id="resetButton" style="margin-top: 15px; background: linear-gradient(45deg, #ff4444, #cc0000); padding: 10px 20px; font-size: 1rem; border-radius: 50px; border: none; color: white; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3); font-weight: bold; text-transform: uppercase;">
+            🔄 RESETEAR JUGADORES
+        </button>
+        
         <div class="instructions">
             <p>📋 <strong>Instrucciones:</strong></p>
             <p>• Cada persona toca el botón una vez</p>
@@ -262,6 +289,7 @@
         ];
 
         const playButton = document.getElementById('playButton');
+        const resetButton = document.getElementById('resetButton');
         const display = document.getElementById('display');
         const progressBar = document.getElementById('progressBar');
 
@@ -270,18 +298,72 @@
         let jugadorSeleccionado = '';
         let posicionImpostor = 0;
         let secuencia = [];
+        let jugadoresUsados = [];
+
+        // Cargar jugadores usados del almacenamiento al iniciar
+        async function cargarJugadoresUsados() {
+            try {
+                const resultado = await window.storage.get('jugadores-usados', false);
+                if (resultado && resultado.value) {
+                    jugadoresUsados = JSON.parse(resultado.value);
+                    console.log(`Cargados ${jugadoresUsados.length} jugadores usados`);
+                }
+            } catch (error) {
+                console.log('No hay jugadores usados guardados, empezando desde cero');
+                jugadoresUsados = [];
+            }
+        }
+
+        // Guardar jugadores usados en el almacenamiento
+        async function guardarJugadoresUsados() {
+            try {
+                await window.storage.set('jugadores-usados', JSON.stringify(jugadoresUsados), false);
+                console.log('Jugadores usados guardados');
+            } catch (error) {
+                console.error('Error al guardar jugadores usados:', error);
+            }
+        }
+
+        // Resetear todos los jugadores
+        async function resetearJugadores() {
+            try {
+                await window.storage.delete('jugadores-usados', false);
+                jugadoresUsados = [];
+                alert('✅ ¡Lista de jugadores reseteada! Todos los jugadores están disponibles de nuevo.');
+                console.log('Jugadores usados reseteados');
+            } catch (error) {
+                console.error('Error al resetear:', error);
+                jugadoresUsados = [];
+                alert('✅ ¡Lista reseteada!');
+            }
+        }
 
         playButton.addEventListener('click', manejarClick);
+        resetButton.addEventListener('click', resetearJugadores);
 
-        function iniciarNuevaRonda() {
+        async function iniciarNuevaRonda() {
             jugadorActual = 1;
             esperandoSiguiente = false;
-            // Seleccionar jugador aleatorio
-            jugadorSeleccionado = jugadores[Math.floor(Math.random() * jugadores.length)];
+            
+            // Si ya usamos todos los jugadores, reiniciar la lista automáticamente
+            if (jugadoresUsados.length >= jugadores.length) {
+                jugadoresUsados = [];
+                await guardarJugadoresUsados();
+                alert('🎉 ¡Se usaron todos los jugadores! La lista se reinició automáticamente.');
+            }
+            
+            // Seleccionar jugador aleatorio que NO haya sido usado
+            let jugadoresDisponibles = jugadores.filter(j => !jugadoresUsados.includes(j));
+            jugadorSeleccionado = jugadoresDisponibles[Math.floor(Math.random() * jugadoresDisponibles.length)];
+            
+            // Agregar el jugador a la lista de usados y guardar
+            jugadoresUsados.push(jugadorSeleccionado);
+            await guardarJugadoresUsados();
+            
             // Determinar posición del impostor (1-5)
             posicionImpostor = Math.floor(Math.random() * 5) + 1;
             
-            // Crear secuencia
+            // Crear secuencia: 4 veces el mismo jugador + 1 impostor
             secuencia = [];
             for (let i = 1; i <= 5; i++) {
                 if (i === posicionImpostor) {
@@ -354,8 +436,10 @@
             }, 1000);
         }
 
-        // Inicializar
-        iniciarNuevaRonda();
+        // Inicializar - cargar jugadores usados del almacenamiento
+        cargarJugadoresUsados().then(() => {
+            iniciarNuevaRonda();
+        });
     </script>
 </body>
 </html>
